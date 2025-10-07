@@ -1,0 +1,237 @@
+import React, { useState } from 'react';
+import { Calendar, Star, Save, Trash2, Edit2, Check, X } from 'lucide-react';
+
+export default function DailyJournal() {
+  const [entries, setEntries] = useState([]);
+  const [currentEntry, setCurrentEntry] = useState('');
+  const [currentTitle, setCurrentTitle] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+
+  const addEntry = () => {
+    if (currentEntry.trim() || currentTitle.trim()) {
+      const newEntry = {
+        id: Date.now(),
+        title: currentTitle || 'Untitled Entry',
+        content: currentEntry,
+        date: selectedDate,
+        timestamp: new Date().toLocaleString(),
+        important: false
+      };
+      setEntries([newEntry, ...entries]);
+      setCurrentEntry('');
+      setCurrentTitle('');
+    }
+  };
+
+  const deleteEntry = (id) => {
+    setEntries(entries.filter(entry => entry.id !== id));
+  };
+
+  const toggleImportant = (id) => {
+    setEntries(entries.map(entry => 
+      entry.id === id ? { ...entry, important: !entry.important } : entry
+    ));
+  };
+
+  const startEdit = (entry) => {
+    setEditingId(entry.id);
+    setEditText(entry.content);
+    setEditTitle(entry.title);
+  };
+
+  const saveEdit = (id) => {
+    setEntries(entries.map(entry => 
+      entry.id === id ? { ...entry, content: editText, title: editTitle } : entry
+    ));
+    setEditingId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText('');
+    setEditTitle('');
+  };
+
+  const importantEntries = entries.filter(e => e.important);
+  const regularEntries = entries.filter(e => !e.important);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">My Daily Journal</h1>
+          <p className="text-gray-600">Capture your thoughts, mark what matters</p>
+        </div>
+
+        {/* Entry Form */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Calendar className="text-purple-600" size={20} />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+          
+          <input
+            type="text"
+            placeholder="Entry title..."
+            value={currentTitle}
+            onChange={(e) => setCurrentTitle(e.target.value)}
+            className="w-full px-4 py-2 mb-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg font-semibold"
+          />
+          
+          <textarea
+            placeholder="Write your thoughts here..."
+            value={currentEntry}
+            onChange={(e) => setCurrentEntry(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+            rows="6"
+          />
+          
+          <button
+            onClick={addEntry}
+            className="mt-4 flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <Save size={20} />
+            Save Entry
+          </button>
+        </div>
+
+        {/* Important Entries Section */}
+        {importantEntries.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Star className="text-yellow-500 fill-yellow-500" size={24} />
+              Important Entries
+            </h2>
+            <div className="space-y-4">
+              {importantEntries.map(entry => (
+                <div key={entry.id} className="bg-yellow-50 border-2 border-yellow-300 rounded-lg shadow-md p-5">
+                  {editingId === entry.id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full px-3 py-2 mb-2 border border-gray-300 rounded-lg"
+                      />
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"
+                        rows="4"
+                      />
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => saveEdit(entry.id)} className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+                          <Check size={16} /> Save
+                        </button>
+                        <button onClick={cancelEdit} className="flex items-center gap-1 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">
+                          <X size={16} /> Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-xl font-bold text-gray-800">{entry.title}</h3>
+                        <div className="flex gap-2">
+                          <button onClick={() => toggleImportant(entry.id)} className="text-yellow-600 hover:text-yellow-700">
+                            <Star size={20} className="fill-yellow-500" />
+                          </button>
+                          <button onClick={() => startEdit(entry)} className="text-blue-600 hover:text-blue-700">
+                            <Edit2 size={20} />
+                          </button>
+                          <button onClick={() => deleteEntry(entry.id)} className="text-red-600 hover:text-red-700">
+                            <Trash2 size={20} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-gray-700 whitespace-pre-wrap mb-3">{entry.content}</p>
+                      <div className="flex gap-4 text-sm text-gray-500">
+                        <span>📅 {entry.date}</span>
+                        <span>🕐 {entry.timestamp}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Regular Entries Section */}
+        {regularEntries.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">All Entries</h2>
+            <div className="space-y-4">
+              {regularEntries.map(entry => (
+                <div key={entry.id} className="bg-white rounded-lg shadow-md p-5 hover:shadow-lg transition-shadow">
+                  {editingId === entry.id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full px-3 py-2 mb-2 border border-gray-300 rounded-lg"
+                      />
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"
+                        rows="4"
+                      />
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => saveEdit(entry.id)} className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+                          <Check size={16} /> Save
+                        </button>
+                        <button onClick={cancelEdit} className="flex items-center gap-1 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">
+                          <X size={16} /> Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-xl font-bold text-gray-800">{entry.title}</h3>
+                        <div className="flex gap-2">
+                          <button onClick={() => toggleImportant(entry.id)} className="text-gray-400 hover:text-yellow-500">
+                            <Star size={20} />
+                          </button>
+                          <button onClick={() => startEdit(entry)} className="text-blue-600 hover:text-blue-700">
+                            <Edit2 size={20} />
+                          </button>
+                          <button onClick={() => deleteEntry(entry.id)} className="text-red-600 hover:text-red-700">
+                            <Trash2 size={20} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-gray-700 whitespace-pre-wrap mb-3">{entry.content}</p>
+                      <div className="flex gap-4 text-sm text-gray-500">
+                        <span>📅 {entry.date}</span>
+                        <span>🕐 {entry.timestamp}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {entries.length === 0 && (
+          <div className="text-center py-12 text-gray-500">
+            <Calendar size={48} className="mx-auto mb-4 text-gray-400" />
+            <p className="text-lg">No entries yet. Start writing your first journal entry!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
